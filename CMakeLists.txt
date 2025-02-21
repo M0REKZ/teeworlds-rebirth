@@ -1112,10 +1112,13 @@ set(EXPECTED_DATA
   ui/gametypes/ddracenetwork.png
   ui/gametypes/dm.png
   ui/gametypes/f-ddrace.png
+  ui/gametypes/fastcap.png
   ui/gametypes/fb.png
+  ui/gametypes/fly.png
   ui/gametypes/gores.png
   "ui/gametypes/ictf).png"
   ui/gametypes/ictf.png
+  ui/gametypes/ictfx.png
   "ui/gametypes/idm).png"
   ui/gametypes/idm.png
   "ui/gametypes/ilms).png"
