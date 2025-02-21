@@ -403,7 +403,6 @@ void CPlayers::RenderPlayer(
 		const int Weapon = clamp(Player.m_Weapon, 0, NUM_WEAPONS-1);
 		RenderTools()->SelectSprite(g_pData->m_Weapons.m_aId[Weapon].m_pSpriteBody, Direction.x < 0 ? SPRITE_FLAG_FLIP_Y : 0);
 
-		vec2 p;
 		if(Player.m_Weapon == WEAPON_HAMMER)
 		{
 			// Static position for hammer

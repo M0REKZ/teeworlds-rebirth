@@ -20,6 +20,7 @@ static const vec4 s_aWeaponColors[] =
 	vec4(163/255.0f, 51/255.0f, 56/255.0f, 1.0f),
 	vec4(65/255.0f, 97/255.0f, 161/255.0f, 1.0f),
 	vec4(182/255.0f, 137/255.0f, 40/255.0f, 1.0f),
+	vec4(182/255.0f, 137/255.0f, 40/255.0f, 1.0f), //temp color please replace
 };
 
 CStats::CStats()
