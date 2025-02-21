@@ -1104,13 +1104,36 @@ set(EXPECTED_DATA
   ui/debug_font.png
   ui/demo_buttons.png
   ui/file_icons.png
+  ui/gametypes/+ddrace.png
+  ui/gametypes/0xf.png
   ui/gametypes/ctf.png
+  ui/gametypes/ddnet++.png
+  ui/gametypes/ddrace.png
+  ui/gametypes/ddracenetwork.png
   ui/gametypes/dm.png
+  ui/gametypes/f-ddrace.png
+  ui/gametypes/fb.png
+  ui/gametypes/gores.png
+  "ui/gametypes/ictf).png"
+  ui/gametypes/ictf.png
+  "ui/gametypes/idm).png"
+  ui/gametypes/idm.png
+  "ui/gametypes/ilms).png"
+  ui/gametypes/ifb.png
+  ui/gametypes/ilms.png
+  "ui/gametypes/ilts).png"
+  ui/gametypes/ilts.png
+  "ui/gametypes/itdm).png"
+  ui/gametypes/itdm.png
   ui/gametypes/lms.png
   ui/gametypes/lts.png
+  ui/gametypes/mkrace.png
   ui/gametypes/mod.png
   ui/gametypes/race.png
   ui/gametypes/tdm.png
+  ui/gametypes/testddracenetwo.png
+  ui/gametypes/testgores.png
+  ui/gametypes/xxlddrace.png
   ui/gui_buttons.png
   ui/gui_cursor.png
   ui/gui_icons.png
