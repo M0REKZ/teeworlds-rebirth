@@ -78,9 +78,9 @@ void CBroadcast::RenderServerBroadcast()
 	{
 		CBroadcastSegment *pSegment = &m_aServerBroadcastSegments[i];
 		if(m_aServerBroadcastSegments[i].m_IsHighContrast)
-			TextRender()->DrawTextOutlined(&m_ServerBroadcastCursor, Fade, pSegment->m_GlyphPos, (pSegment+1)->m_GlyphPos);
+			TextRender()->DrawTextOutlined(&m_ServerBroadcastCursor, Fade, pSegment->m_GlyphPos, (pSegment + 1)->m_GlyphPos - pSegment->m_GlyphPos);
 		else
-			TextRender()->DrawTextShadowed(&m_ServerBroadcastCursor, ShadowOffset, Fade, pSegment->m_GlyphPos, (pSegment+1)->m_GlyphPos);
+			TextRender()->DrawTextShadowed(&m_ServerBroadcastCursor, ShadowOffset, Fade, pSegment->m_GlyphPos, (pSegment + 1)->m_GlyphPos - pSegment->m_GlyphPos);
 	}
 }
 
@@ -143,8 +143,13 @@ void CBroadcast::OnBroadcastMessage(const CNetMsg_Sv_Broadcast *pMsg)
 		return;
 
 	// new broadcast message
-	int MsgLength = str_length(pMsg->m_pMessage);
+	const int MsgLength = str_length(pMsg->m_pMessage);
 	m_ServerBroadcastReceivedTime = Client()->LocalTime();
+	if(!MsgLength)
+	{
+		m_ServerBroadcastCursor.Reset();
+		return;
+	}
 
 	char aBuf[MAX_BROADCAST_MSG_SIZE];
 	vec4 SegmentColors[MAX_BROADCAST_MSG_SIZE];
@@ -154,9 +159,24 @@ void CBroadcast::OnBroadcastMessage(const CNetMsg_Sv_Broadcast *pMsg)
 	int UserLineCount = 1;
 
 	// parse colors and newline
-	for(int i = 0; i < MsgLength && ServerMsgLen < MAX_BROADCAST_MSG_SIZE - 1; i++)
+	for(int i = 0; i < MsgLength && ServerMsgLen < MAX_BROADCAST_MSG_SIZE - 1 && m_NumSegments < MAX_BROADCAST_MSG_SIZE - 1; i++)
 	{
 		const char *c = pMsg->m_pMessage + i;
+
+		if(*c == '\\' && c[1] == '^')
+		{
+			aBuf[ServerMsgLen++] = c[1];
+			i++; // skip '^'
+			continue;
+		}
+
+		if (*c == '\\' && c[1] == '\\')
+		{
+			aBuf[ServerMsgLen++] = *c;
+			i++; // skip the second backslash
+			continue;
+		}
+
 		if(*c == '^' && i+3 < MsgLength && IsCharANum(c[1]) && IsCharANum(c[2])  && IsCharANum(c[3]))
 		{
 			SegmentColors[m_NumSegments] = vec4((c[1] - '0') / 9.0f, (c[2] - '0') / 9.0f, (c[3] - '0') / 9.0f, 1.0f);
@@ -249,7 +269,8 @@ void CBroadcast::OnBroadcastMessage(const CNetMsg_Sv_Broadcast *pMsg)
 			m_aServerBroadcastSegments[i].m_IsHighContrast = false;
 		}
 		m_aServerBroadcastSegments[i].m_GlyphPos = m_ServerBroadcastCursor.GlyphCount();
-		TextRender()->TextDeferred(&m_ServerBroadcastCursor, aBuf + SegmentIndices[i], SegmentIndices[i+1] - SegmentIndices[i]);
+		// The segment array always contains exactly m_NumSegments + 1 valid segments but clang-analyzer can't determine that.
+		TextRender()->TextDeferred(&m_ServerBroadcastCursor, aBuf + SegmentIndices[i], SegmentIndices[i+1] - SegmentIndices[i]); // NOLINT(clang-analyzer-core.UndefinedBinaryOperatorResult)
 	}
 	m_aServerBroadcastSegments[m_NumSegments].m_GlyphPos = m_ServerBroadcastCursor.GlyphCount();
 	TextRender()->TextColor(OldColor);

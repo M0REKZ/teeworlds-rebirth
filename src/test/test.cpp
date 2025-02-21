@@ -1,3 +1,5 @@
+/* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
+/* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "test.h"
 #include <gtest/gtest.h>
 
@@ -23,6 +25,7 @@ int main(int argc, const char **argv)
 	::testing::InitGoogleTest(&argc, const_cast<char **>(argv));
 	net_init();
 	int Result = RUN_ALL_TESTS();
+	secure_random_uninit();
 	cmdline_free(argc, argv);
 	return Result;
 }

@@ -108,7 +108,7 @@ function GenerateCommonSettings(settings, conf, arch, compiler)
 	libs = {zlib=zlib, wavpack=wavpack, png=png, md5=md5, json=json}
 end
 
-function GenerateMacOSXSettings(settings, conf, arch, compiler)
+function GenerateMacOSSettings(settings, conf, arch, compiler)
 	if arch == "x86" then
 		settings.cc.flags:Add("-arch i386")
 		settings.link.flags:Add("-arch i386")
@@ -145,7 +145,7 @@ function GenerateMacOSXSettings(settings, conf, arch, compiler)
 	GenerateCommonSettings(settings, conf, arch, compiler)
 
 	-- Build server launcher before adding game stuff
-	local serverlaunch = Link(settings, "serverlaunch", Compile(settings, "src/osxlaunch/server.m"))
+	local serverlaunch = Link(settings, "serverlaunch", Compile(settings, "src/macoslaunch/server.m"))
 
 	-- Master server, version server and tools
 	BuildEngineCommon(settings)
@@ -166,7 +166,7 @@ function GenerateMacOSXSettings(settings, conf, arch, compiler)
 	settings.link.frameworks:Add("AGL")
 	-- FIXME: the SDL config is applied in BuildClient too but is needed here before so the launcher will compile
 	config.sdl:Apply(settings)
-	settings.link.extrafiles:Merge(Compile(settings, "src/osxlaunch/client.m"))
+	settings.link.extrafiles:Merge(Compile(settings, "src/macoslaunch/client.m"))
 	BuildClient(settings)
 
 	-- Content
@@ -368,24 +368,24 @@ function BuildServer(settings, family, platform)
 	
 	local game_server = Compile(settings, CollectRecursive("src/game/server/*.cpp"), SharedServerFiles())
 	
-	return Link(settings, "teeworlds_srv", libs["zlib"], libs["md5"], server, game_server)
+	return Link(settings, "teeworlds_srv", libs["zlib"], libs["md5"], libs["json"], server, game_server)
 end
 
 function BuildTools(settings)
 	local tools = {}
 	for i,v in ipairs(Collect("src/tools/*.cpp", "src/tools/*.c")) do
 		local toolname = PathFilename(PathBase(v))
-		tools[i] = Link(settings, toolname, Compile(settings, v), libs["zlib"], libs["md5"], libs["wavpack"], libs["png"])
+		tools[i] = Link(settings, toolname, Compile(settings, v), libs["zlib"], libs["md5"], libs["wavpack"], libs["png"], libs["json"])
 	end
 	PseudoTarget(settings.link.Output(settings, "pseudo_tools") .. settings.link.extension, tools)
 end
 
 function BuildMasterserver(settings)
-	return Link(settings, "mastersrv", Compile(settings, Collect("src/mastersrv/*.cpp")), libs["zlib"], libs["md5"])
+	return Link(settings, "mastersrv", Compile(settings, Collect("src/mastersrv/*.cpp")), libs["zlib"], libs["md5"], libs["json"])
 end
 
 function BuildVersionserver(settings)
-	return Link(settings, "versionsrv", Compile(settings, Collect("src/versionsrv/*.cpp")), libs["zlib"], libs["md5"])
+	return Link(settings, "versionsrv", Compile(settings, Collect("src/versionsrv/*.cpp")), libs["zlib"], libs["md5"], libs["json"])
 end
 
 function BuildContent(settings, arch, conf)
@@ -465,7 +465,7 @@ function GenerateSettings(conf, arch, builddir, compiler, headless)
 		GenerateWindowsSettings(settings, conf, arch, compiler)
 	elseif family == "unix" then
 		if platform == "macosx" then
-			GenerateMacOSXSettings(settings, conf, arch, compiler)
+			GenerateMacOSSettings(settings, conf, arch, compiler)
 		elseif platform == "solaris" then
 			GenerateSolarisSettings(settings, conf, arch, compiler)
 		else -- Linux, BSD
@@ -504,7 +504,7 @@ if ScriptArgs['arch'] then
 else
 	if arch == "ia32" then
 		archs = {"x86"}
-	elseif arch == "ia64" or arch == "amd64" then
+	elseif arch == "ia64" or arch == "amd64" or arch == "arm64" then
 		archs = {"x86_64"}
 	else
 		archs = {arch}

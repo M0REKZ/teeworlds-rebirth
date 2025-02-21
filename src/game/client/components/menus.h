@@ -5,6 +5,7 @@
 
 #include <base/vmath.h>
 #include <base/tl/sorted_array.h>
+#include <base/tl/string.h>
 
 #include <engine/graphics.h>
 #include <engine/demo.h>
@@ -16,6 +17,8 @@
 #include <game/client/component.h>
 #include <game/client/localization.h>
 #include <game/client/ui.h>
+#include <game/client/ui_listbox.h>
+#include <game/client/ui_scrollregion.h>
 
 #include "skins.h"
 
@@ -34,37 +37,13 @@ public:
 
 class CMenus : public CComponent
 {
-public:
-	class CUIElementBase
-	{
-	protected:
-		static CRenderTools *m_pRenderTools;
-		static CUI *m_pUI;
-		static IInput *m_pInput;
-		static IClient *m_pClient;
-		static CConfig *m_pConfig;
-
-	public:
-		static void Init(CMenus *pMenus) { m_pRenderTools = pMenus->RenderTools(); m_pUI = pMenus->UI(); m_pInput = pMenus->Input(); m_pClient = pMenus->Client(); m_pConfig = pMenus->Config(); }
-	};
-
-	class CButtonContainer : public CUIElementBase
-	{
-		bool m_CleanBackground;
-		float m_FadeStartTime;
-	public:
-		CButtonContainer(bool CleanBackground = false) : m_FadeStartTime(0.0f) { m_CleanBackground = CleanBackground; }
-		float GetFade(bool Checked = false, float Seconds = 0.6f);
-		bool IsCleanBackground() const { return m_CleanBackground; }
-	};
-
 private:
 	typedef float (CMenus::*FDropdownCallback)(CUIRect View);
 
-	bool DoButton_SpriteID(CButtonContainer *pBC, int ImageID, int SpriteID, bool Checked, const CUIRect *pRect, int Corners = CUIRect::CORNER_ALL, float Rounding = 5.0f, bool Fade = true);
+	bool DoButton_SpriteID(CButtonContainer *pButtonContainer, int ImageID, int SpriteID, bool Checked, const CUIRect *pRect, int Corners = CUIRect::CORNER_ALL, float Rounding = 5.0f, bool Fade = true);
 	bool DoButton_Toggle(const void *pID, bool Checked, const CUIRect *pRect, bool Active);
-	bool DoButton_Menu(CButtonContainer *pBC, const char *pText, bool Checked, const CUIRect *pRect, const char *pImageName = 0, int Corners = CUIRect::CORNER_ALL, float Rounding = 5.0f, float FontFactor = 0.0f, vec4 ColorHot = vec4(1.0f, 1.0f, 1.0f, 0.75f), bool TextFade = true);
-	bool DoButton_MenuTabTop(CButtonContainer *pBC, const char *pText, bool Checked, const CUIRect *pRect, float Alpha = 1.0f, float FontAlpha = 1.0f, int Corners = CUIRect::CORNER_ALL, float Rounding = 5.0f, float FontFactor = 0.0f);
+	bool DoButton_Menu(CButtonContainer *pButtonContainer, const char *pText, bool Checked, const CUIRect *pRect, const char *pImageName = 0, int Corners = CUIRect::CORNER_ALL, float Rounding = 5.0f, float FontFactor = 0.0f, vec4 ColorHot = vec4(1.0f, 1.0f, 1.0f, 0.75f), bool TextFade = true);
+	bool DoButton_MenuTabTop(CButtonContainer *pButtonContainer, const char *pText, bool Checked, const CUIRect *pRect, float Alpha = 1.0f, float FontAlpha = 1.0f, int Corners = CUIRect::CORNER_ALL, float Rounding = 5.0f, float FontFactor = 0.0f);
 
 	bool DoButton_CheckBox(const void *pID, const char *pText, bool Checked, const CUIRect *pRect, bool Locked = false);
 
@@ -75,158 +54,8 @@ private:
 	void DoInfoBox(const CUIRect *pRect, const char *pLable, const char *pValue);
 
 	void DoJoystickBar(const CUIRect *pRect, float Current, float Tolerance, bool Active);
-	void DoButton_KeySelect(CButtonContainer *pBC, const char *pText, const CUIRect *pRect);
+	void DoButton_KeySelect(CButtonContainer *pButtonContainer, const char *pText, const CUIRect *pRect);
 	int DoKeyReader(CButtonContainer *pPC, const CUIRect *pRect, int Key, int Modifier, int *pNewModifier);
-
-	// Scroll region : found in menus_scrollregion.cpp
-	struct CScrollRegionParams
-	{
-		float m_ScrollbarWidth;
-		float m_ScrollbarMargin;
-		float m_SliderMinHeight;
-		float m_ScrollUnit;
-		vec4 m_ClipBgColor;
-		vec4 m_ScrollbarBgColor;
-		vec4 m_RailBgColor;
-		vec4 m_SliderColor;
-		vec4 m_SliderColorHover;
-		vec4 m_SliderColorGrabbed;
-		int m_Flags;
-
-		enum {
-			FLAG_CONTENT_STATIC_WIDTH = 0x1
-		};
-
-		CScrollRegionParams()
-		{
-			m_ScrollbarWidth = 20;
-			m_ScrollbarMargin = 5;
-			m_SliderMinHeight = 25;
-			m_ScrollUnit = 10;
-			m_ClipBgColor = vec4(0.0f, 0.0f, 0.0f, 0.25f);
-			m_ScrollbarBgColor = vec4(0.0f, 0.0f, 0.0f, 0.25f);
-			m_RailBgColor = vec4(1.0f, 1.0f, 1.0f, 0.25f);
-			m_SliderColor = vec4(0.8f, 0.8f, 0.8f, 1.0f);
-			m_SliderColorHover = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-			m_SliderColorGrabbed = vec4(0.9f, 0.9f, 0.9f, 1.0f);
-			m_Flags = 0;
-		}
-	};
-
-	/*
-	Usage:
-		-- Initialization --
-		static CScrollRegion s_ScrollRegion;
-		vec2 ScrollOffset(0, 0);
-		s_ScrollRegion.Begin(&ScrollRegionRect, &ScrollOffset);
-		Content = ScrollRegionRect;
-		Content.y += ScrollOffset.y;
-
-		-- "Register" your content rects --
-		CUIRect Rect;
-		Content.HSplitTop(SomeValue, &Rect, &Content);
-		s_ScrollRegion.AddRect(Rect);
-
-		-- [Optional] Knowing if a rect is clipped --
-		s_ScrollRegion.IsRectClipped(Rect);
-
-		-- [Optional] Scroll to a rect (to the last added rect)--
-		...
-		s_ScrollRegion.AddRect(Rect);
-		s_ScrollRegion.ScrollHere(Option);
-
-		-- End --
-		s_ScrollRegion.End();
-	*/
-	// Instances of CScrollRegion must be static, as member addresses are used as UI item IDs
-	class CScrollRegion : private CUIElementBase
-	{
-	private:
-		float m_ScrollY;
-		float m_ContentH;
-		float m_RequestScrollY; // [0, ContentHeight]
-
-		float m_AnimTime;
-		float m_AnimInitScrollY;
-		float m_AnimTargetScrollY;
-
-		CUIRect m_ClipRect;
-		CUIRect m_RailRect;
-		CUIRect m_LastAddedRect; // saved for ScrollHere()
-		vec2 m_SliderGrabPos; // where did user grab the slider
-		vec2 m_ContentScrollOff;
-		CScrollRegionParams m_Params;
-
-	public:
-		enum {
-			SCROLLHERE_KEEP_IN_VIEW=0,
-			SCROLLHERE_TOP,
-			SCROLLHERE_BOTTOM,
-		};
-
-		CScrollRegion();
-		void Begin(CUIRect* pClipRect, vec2* pOutOffset, CScrollRegionParams* pParams = 0);
-		void End();
-		void AddRect(CUIRect Rect);
-		void ScrollHere(int Option = CScrollRegion::SCROLLHERE_KEEP_IN_VIEW);
-		bool IsRectClipped(const CUIRect& Rect) const;
-		bool IsScrollbarShown() const;
-		bool IsAnimating() const;
-	};
-
-	// Listbox : found in menus_listbox.cpp
-	struct CListboxItem
-	{
-		bool m_Visible;
-		bool m_Selected;
-		bool m_Disabled;
-		CUIRect m_Rect;
-	};
-
-	// Instances of CListBox must be static, as member addresses are used as UI item IDs
-	class CListBox : private CUIElementBase
-	{
-	private:
-		CUIRect m_ListBoxView;
-		float m_ListBoxRowHeight;
-		int m_ListBoxItemIndex;
-		int m_ListBoxSelectedIndex;
-		int m_ListBoxNewSelected;
-		int m_ListBoxNewSelOffset;
-		int m_ListBoxUpdateScroll;
-		int m_ListBoxDoneEvents;
-		int m_ListBoxNumItems;
-		int m_ListBoxItemsPerRow;
-		bool m_ListBoxItemActivated;
-		const char *m_pBottomText;
-		float m_FooterHeight;
-		CScrollRegion m_ScrollRegion;
-		vec2 m_ScrollOffset;
-		char m_aFilterString[64];
-		CLineInput m_FilterInput;
-		int m_BackgroundCorners;
-
-	protected:
-		CListboxItem DoNextRow();
-
-	public:
-		CListBox();
-
-		void DoBegin(const CUIRect *pRect);
-		void DoHeader(const CUIRect *pRect, const char *pTitle, float HeaderHeight = 20.0f, float Spacing = 2.0f);
-		void DoSpacing(float Spacing = 20.0f);
-		bool DoFilter(float FilterHeight = 20.0f, float Spacing = 2.0f);
-		void DoFooter(const char *pBottomText, float FooterHeight = 20.0f); // call before DoStart to create a footer
-		void DoStart(float RowHeight, int NumItems, int ItemsPerRow, int RowsPerScroll, int SelectedIndex,
-					const CUIRect *pRect = 0, bool Background = true, bool *pActive = 0, int BackgroundCorners = CUIRect::CORNER_ALL);
-		CListboxItem DoNextItem(const void *pID, bool Selected = false, bool *pActive = 0);
-		CListboxItem DoSubheader();
-		int DoEnd();
-		bool FilterMatches(const char *pNeedle) const;
-		bool WasItemActivated() const { return m_ListBoxItemActivated; }
-		float GetScrollBarWidth() const { return m_ScrollRegion.IsScrollbarShown() ? 20 : 0; } // defined in menus_scrollregion.cpp
-	};
-
 
 	enum
 	{
@@ -368,7 +197,7 @@ private:
 	bool m_NeedRestartGraphics;
 	bool m_NeedRestartSound;
 	int m_TeePartSelected;
-	char m_aSaveSkinName[MAX_SKIN_ARRAY_SIZE];
+	CLineInputBuffered<static_cast<int>(MAX_SKIN_ARRAY_SIZE), static_cast<int>(MAX_SKIN_LENGTH)> m_SkinNameInput;
 
 	bool m_RefreshSkinSelector;
 	const CSkins::CSkin *m_pSelectedSkin;
@@ -389,8 +218,8 @@ private:
 	// for call vote
 	int m_CallvoteSelectedOption;
 	int m_CallvoteSelectedPlayer;
-	char m_aFilterString[VOTE_REASON_LENGTH];
-	char m_aCallvoteReason[VOTE_REASON_LENGTH];
+	CLineInputBuffered<static_cast<int>(VOTE_REASON_LENGTH)> m_CallvoteFilterInput;
+	CLineInputBuffered<static_cast<int>(VOTE_REASON_LENGTH)> m_CallvoteReasonInput;
 
 	// demo
 	enum
@@ -474,10 +303,11 @@ private:
 
 	sorted_array<CDemoItem> m_lDemos;
 	char m_aCurrentDemoFolder[IO_MAX_PATH_LENGTH];
-	char m_aCurrentDemoFile[IO_MAX_PATH_LENGTH];
+	CLineInputBuffered<static_cast<int>(IO_MAX_PATH_LENGTH)> m_DemoNameInput;
 	int m_DemolistSelectedIndex;
 	bool m_DemolistSelectedIsDir;
 	int m_DemolistStorageType;
+	char m_aDemolistPreviousSelection[IO_MAX_PATH_LENGTH];
 	int64 m_SeekBarActivatedTime;
 	bool m_SeekBarActive;
 
@@ -534,16 +364,19 @@ private:
 		IServerBrowser *m_pServerBrowser;
 
 		static CServerFilterInfo ms_FilterStandard;
+		static CServerFilterInfo ms_FilterRace;
 		static CServerFilterInfo ms_FilterFavorites;
 		static CServerFilterInfo ms_FilterAll;
 
 	public:
 		enum
 		{
-			FILTER_CUSTOM=0,
+			FILTER_CUSTOM = 0,
 			FILTER_ALL,
 			FILTER_STANDARD,
 			FILTER_FAVORITES,
+			FILTER_RACE,
+			NUM_FILTERS,
 		};
 
 		CButtonContainer m_DeleteButtonContainer;
@@ -577,7 +410,7 @@ private:
 	void LoadFilters();
 	void SaveFilters();
 	void RemoveFilter(int FilterIndex);
-	void Move(bool Up, int Filter);
+	void MoveFilter(bool Up, int Filter);
 	void InitDefaultFilters();
 
 	struct CColumn
@@ -727,7 +560,7 @@ private:
 	// found in menus_settings.cpp
 	void RenderLanguageSelection(CUIRect MainView, bool Header=true);
 	void RenderThemeSelection(CUIRect MainView, bool Header=true);
-	void RenderHSLPicker(CUIRect Picker);
+	void RenderHSLPicker(CUIRect MainView);
 	void RenderSkinSelection(CUIRect MainView);
 	void RenderSkinPartSelection(CUIRect MainView);
 	void RenderSkinPartPalette(CUIRect MainView);

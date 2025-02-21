@@ -42,6 +42,20 @@ bool CTuningParams::Get(const char *pName, float *pValue) const
 	return false;
 }
 
+int CTuningParams::PossibleTunings(const char *pStr, IConsole::FPossibleCallback pfnCallback, void *pUser)
+{
+	int Index = 0;
+	for(int i = 0; i < Num(); i++)
+	{
+		if(str_find_nocase(GetName(i), pStr))
+		{
+			pfnCallback(Index, GetName(i), pUser);
+			Index++;
+		}
+	}
+	return Index;
+}
+
 
 float VelocityRamp(float Value, float Start, float Range, float Curvature)
 {
@@ -327,7 +341,7 @@ void CCharacterCore::Tick(bool UseInput)
 				//release_hooked();
 		}
 
-		// don't do this hook rutine when we are hook to a player
+		// don't do this hook routine when we are already hooked to a player
 		if(m_HookedPlayer == -1 && distance(m_HookPos, m_Pos) > 46.0f)
 		{
 			vec2 HookVel = normalize(m_HookPos-m_Pos)*m_pWorld->m_Tuning.m_HookDragAccel;

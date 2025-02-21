@@ -1,4 +1,7 @@
-#pragma once
+/* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
+/* If you are missing that file, acquire a complete release at teeworlds.com.                */
+#ifndef ENGINE_CLIENT_GRAPHICS_THREADED_NULL_H
+#define ENGINE_CLIENT_GRAPHICS_THREADED_NULL_H
 
 #include <engine/graphics.h>
 
@@ -9,6 +12,8 @@ public:
 	{
 		m_ScreenWidth = 800;
 		m_ScreenHeight = 600;
+		m_DesktopScreenWidth = 800;
+		m_DesktopScreenHeight = 600;
 	};
 
 	virtual void ClipEnable(int x, int y, int w, int h) {};
@@ -25,7 +30,13 @@ public:
 	virtual int MemoryUsage() const { return 0; };
 
 	virtual void MapScreen(float TopLeftX, float TopLeftY, float BottomRightX, float BottomRightY) {};
-	virtual void GetScreen(float *pTopLeftX, float *pTopLeftY, float *pBottomRightX, float *pBottomRightY) {};
+	virtual void GetScreen(float *pTopLeftX, float *pTopLeftY, float *pBottomRightX, float *pBottomRightY)
+	{
+		*pTopLeftX = 0;
+		*pTopLeftY = 0;
+		*pBottomRightX = 600;
+		*pBottomRightY = 600;
+	};
 
 	virtual void LinesBegin() {};
 	virtual void LinesEnd() {};
@@ -87,3 +98,5 @@ public:
 	virtual bool IsIdle() const { return false; };
 	virtual void WaitForIdle() {};
 };
+
+#endif // ENGINE_CLIENT_GRAPHICS_THREADED_NULL_H

@@ -808,7 +808,7 @@ void CCharacter::TickDefered()
 		m_ReckoningCore.Write(&Predicted);
 		m_Core.Write(&Current);
 
-		// only allow dead reackoning for a top of 3 seconds
+		// only allow dead reckoning for a top of 3 seconds
 		if(m_ReckoningTick+Server()->TickSpeed()*3 < Server()->Tick() || mem_comp(&Predicted, &Current, sizeof(CNetObj_Character)) != 0)
 		{
 			m_ReckoningTick = Server()->Tick();
@@ -1071,7 +1071,7 @@ void CCharacter::Snap(int SnappingClient)
 
 	if(pCharacter->m_Emote == EMOTE_NORMAL)
 	{
-		if(250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)
+		if(5 * Server()->TickSpeed() - ((Server()->Tick() - m_LastAction) % (5 * Server()->TickSpeed())) < 5)
 			pCharacter->m_Emote = EMOTE_BLINK;
 	}
 }

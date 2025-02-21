@@ -3,7 +3,12 @@
 #ifndef GAME_CLIENT_LINEINPUT_H
 #define GAME_CLIENT_LINEINPUT_H
 
+#include <base/vmath.h>
+
+#include <engine/client.h>
+#include <engine/graphics.h>
 #include <engine/input.h>
+#include <engine/textrender.h>
 
 enum EInputPriority
 {
@@ -16,9 +21,10 @@ enum EInputPriority
 // line input helper
 class CLineInput
 {
-	static class IInput *s_pInput;
-	static class ITextRender *s_pTextRender;
-	static class IGraphics *s_pGraphics;
+	static IInput *s_pInput;
+	static ITextRender *s_pTextRender;
+	static IGraphics *s_pGraphics;
+	static IClient *s_pClient;
 
 	static CLineInput *s_pActiveInput;
 	static EInputPriority s_ActiveInputPriority;
@@ -28,7 +34,7 @@ class CLineInput
 
 	static char s_aStars[128];
 
-	class CTextCursor m_TextCursor;
+	CTextCursor m_TextCursor;
 	char *m_pStr;
 	int m_MaxSize;
 	int m_MaxChars;
@@ -40,10 +46,12 @@ class CLineInput
 	int m_SelectionEnd;
 
 	float m_ScrollOffset;
+	float m_ScrollOffsetChange;
 	vec2 m_CaretPosition;
 
 	bool m_Hidden;
 	bool m_WasChanged;
+	bool m_WasRendered;
 
 	void UpdateStrData();
 	enum EMoveDirection
@@ -59,7 +67,13 @@ class CLineInput
 	void OnDeactivate();
 
 public:
-	static void Init(class IInput *pInput, class ITextRender *pTextRender, class IGraphics *pGraphics) { s_pInput = pInput; s_pTextRender = pTextRender; s_pGraphics = pGraphics; }
+	static void Init(IInput *pInput, ITextRender *pTextRender, IGraphics *pGraphics, IClient *pClient)
+	{
+		s_pInput = pInput;
+		s_pTextRender = pTextRender;
+		s_pGraphics = pGraphics;
+		s_pClient = pClient;
+	}
 	static void RenderCandidates();
 
 	static CLineInput *GetActiveInput() { return s_pActiveInput; }
@@ -77,7 +91,7 @@ public:
 	void Insert(const char *pString, int Begin);
 	void Append(const char *pString);
 
-	class CTextCursor *GetCursor() { return &m_TextCursor; }
+	CTextCursor *GetCursor() { return &m_TextCursor; }
 	const char *GetString() const { return m_pStr; }
 	const char *GetDisplayedString();
 	int GetMaxSize() const { return m_MaxSize; }
@@ -98,6 +112,8 @@ public:
 	// used either for vertical or horizontal scrolling
 	float GetScrollOffset() const { return m_ScrollOffset; }
 	void SetScrollOffset(float ScrollOffset) { m_ScrollOffset = ScrollOffset; }
+	float GetScrollOffsetChange() const { return m_ScrollOffsetChange; }
+	void SetScrollOffsetChange(float ScrollOffsetChange) { m_ScrollOffsetChange = ScrollOffsetChange; }
 
 	vec2 GetCaretPosition() const { return m_CaretPosition; } // only updated while the input is active
 
@@ -107,11 +123,24 @@ public:
 	bool ProcessInput(const IInput::CEvent &Event);
 	bool WasChanged() { bool Changed = m_WasChanged; m_WasChanged = false; return Changed; }
 
-	void Render();
+	void Render(bool Changed);
 
 	bool IsActive() const { return GetActiveInput() == this; }
 	void Activate(EInputPriority Priority);
 	void Deactivate();
+};
+
+template<int MaxSize, int MaxChars = MaxSize>
+class CLineInputBuffered : public CLineInput
+{
+	char m_aBuffer[MaxSize];
+
+public:
+	CLineInputBuffered() : CLineInput()
+	{
+		m_aBuffer[0] = 0;
+		SetBuffer(m_aBuffer, MaxSize, MaxChars);
+	}
 };
 
 #endif

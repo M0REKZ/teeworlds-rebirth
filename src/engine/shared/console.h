@@ -36,7 +36,7 @@ class CConsole : public IConsole
 
 	int m_FlagMask;
 	bool m_StoreCommands;
-	const char *m_paStrokeStr[2];
+	const char *m_apStrokeStr[2];
 	CCommand *m_pFirstCommand;
 
 	class CExecFile
@@ -60,6 +60,7 @@ class CConsole : public IConsole
 	static void Con_Echo(IResult *pResult, void *pUserData);
 	static void Con_Exec(IResult *pResult, void *pUserData);
 	static void Con_EvalIf(IResult *pResult, void *pUserData);
+	static void Con_EvalIfCmd(IResult *pResult, void *pUserData);
 	static void ConToggle(IResult *pResult, void *pUser);
 	static void ConToggleStroke(IResult *pResult, void *pUser);
 	static void ConModCommandAccess(IResult *pResult, void *pUser);

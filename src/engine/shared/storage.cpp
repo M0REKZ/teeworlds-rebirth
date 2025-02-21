@@ -394,15 +394,15 @@ public:
 	bool ReadFile(const char *pFilename, int Type, void **ppResult, unsigned *pResultLen)
 	{
 		IOHANDLE File = OpenFile(pFilename, IOFLAG_READ, Type);
-		*ppResult = 0;
-		*pResultLen = 0;
 		if(!File)
 		{
-			return true;
+			*ppResult = 0x0;
+			*pResultLen = 0;
+			return false;
 		}
 		io_read_all(File, ppResult, pResultLen);
 		io_close(File);
-		return false;
+		return true;
 	}
 
 	char *ReadFileStr(const char *pFilename, int Type)
@@ -586,7 +586,7 @@ public:
 			if(Bytes <= 0)
 				break;
 			sha256_update(&Sha256Ctx, aBuffer, Bytes);
-			Crc = crc32(Crc, aBuffer, Bytes); // ignore_convention
+			Crc = crc32(Crc, aBuffer, Bytes);
 			Size += Bytes;
 		}
 

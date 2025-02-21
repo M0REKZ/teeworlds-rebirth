@@ -326,7 +326,7 @@ void IGameController::OnPlayerConnect(CPlayer *pPlayer)
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
 	// update game info
-	UpdateGameInfo(ClientID);
+	SendGameInfo(ClientID);
 }
 
 void IGameController::OnPlayerDisconnect(CPlayer *pPlayer)
@@ -855,7 +855,7 @@ void IGameController::CheckGameInfo()
 	m_GameInfo.m_ScoreLimit = Config()->m_SvScorelimit;
 	m_GameInfo.m_TimeLimit = Config()->m_SvTimelimit;
 	if(GameInfoChanged)
-		UpdateGameInfo(-1);
+		SendGameInfo(-1);
 }
 
 bool IGameController::IsFriendlyFire(int ClientID1, int ClientID2) const
@@ -890,7 +890,7 @@ bool IGameController::IsTeamChangeAllowed() const
 	return !GameServer()->m_World.m_Paused || (m_GameState == IGS_START_COUNTDOWN && m_GameStartTick == Server()->Tick());
 }
 
-void IGameController::UpdateGameInfo(int ClientID)
+void IGameController::SendGameInfo(int ClientID)
 {
 	CNetMsg_Sv_GameInfo GameInfoMsg;
 	GameInfoMsg.m_GameFlags = m_GameFlags;
@@ -1195,8 +1195,12 @@ int IGameController::GetStartTeam()
 	int Team = TEAM_RED;
 	if(IsTeamplay())
 	{
+#ifdef CONF_DEBUG
 		if(!Config()->m_DbgStress)	// this will force the auto balancer to work overtime aswell
+#endif
+		{
 			Team = m_aTeamSize[TEAM_RED] > m_aTeamSize[TEAM_BLUE] ? TEAM_BLUE : TEAM_RED;
+		}
 	}
 
 	// check if there're enough player slots left
