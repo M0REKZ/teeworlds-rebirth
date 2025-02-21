@@ -190,6 +190,9 @@ public:
 
 	bool IsInWater();
 	bool IsFloating();
+
+	void Read(const CNetObj_CharacterCore_07 *pObjCore);
+	void Write(CNetObj_CharacterCore_07 *pObjCore) const;
 };
 
 #endif

@@ -34,6 +34,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy, bool AsSpe
 	m_DeadSpecMode = false;
 	m_Spawning = false;
 	mem_zero(&m_Latency, sizeof(m_Latency));
+
+	m_Rebirth = false;
 }
 
 CPlayer::~CPlayer()

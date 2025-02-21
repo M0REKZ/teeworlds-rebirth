@@ -257,6 +257,8 @@ public:
 
 	CGameInfo m_GameInfo;
 
+	bool m_RebirthServer;
+
 	struct CServerSettings
 	{
 		bool m_KickVote;

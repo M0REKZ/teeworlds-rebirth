@@ -380,6 +380,63 @@ void CItems::OnRender()
 		{
 			RenderHarpoon((const CNetObj_Harpoon*)pData);
 		}
+		else if(Item.m_Type == NETOBJTYPE_PROJECTILE_07) //07 from here
+		{
+			CNetObj_Projectile Proj;
+			mem_copy(&Proj, pData, sizeof(CNetObj_Projectile_07));
+			Proj.m_Water = 0;
+			RenderProjectile(&Proj, Item.m_ID);
+
+		}
+		else if(Item.m_Type == NETOBJTYPE_PICKUP_07)
+		{
+			const void *pPrev = Client()->SnapFindItem(IClient::SNAP_PREV, Item.m_Type, Item.m_ID);
+			if(pPrev)
+			{
+				CNetObj_Pickup PickupData;
+				mem_copy(&PickupData, pData, sizeof(CNetObj_Pickup_07));
+				PickupData.m_DisturbedTick = 0;
+				CNetObj_Pickup PickupDataPrev;
+				mem_copy(&PickupDataPrev, pPrev, sizeof(CNetObj_Pickup_07));
+				PickupDataPrev.m_DisturbedTick = 0;
+				RenderPickup(&PickupDataPrev, &PickupData);
+			}
+		}
+		else if (Item.m_Type == NETOBJTYPE_CHARACTER_07)
+		{
+			CNetObj_Character Char;
+			CNetObj_Character_07* Char07 = (CNetObj_Character_07*)pData;
+			Char.m_Tick = Char07->m_Tick;
+			Char.m_X = Char07->m_X;
+			Char.m_Y = Char07->m_Y;
+			Char.m_VelX = Char07->m_VelX;
+			Char.m_VelY = Char07->m_VelY;
+			Char.m_Angle = Char07->m_Angle;
+			Char.m_Direction = Char07->m_Direction;
+			Char.m_Jumped = Char07->m_Jumped;
+			Char.m_HookedPlayer = Char07->m_HookedPlayer;
+			Char.m_HookState = Char07->m_HookState;
+			Char.m_HookTick = Char07->m_HookTick;
+			Char.m_HookX = Char07->m_HookX;
+			Char.m_HookY = Char07->m_HookY;
+			Char.m_HookDx = Char07->m_HookDx;
+			Char.m_HookDy = Char07->m_HookDy;
+			Char.m_DirectionVertical = 0;
+			Char.m_DivingGear = 0;
+
+			Char.m_Health = Char07->m_Health;
+			Char.m_Armor = Char07->m_Armor;
+			Char.m_AmmoCount = Char07->m_AmmoCount;
+			Char.m_Weapon = Char07->m_Weapon;
+			Char.m_Emote = Char07->m_Emote;
+			Char.m_AttackTick = Char07->m_AttackTick;
+			Char.m_TriggeredEvents = Char07->m_TriggeredEvents;
+			Char.m_BreathBubbles = -1;
+			Char.m_HarpoonAmmoReload = 0;
+			Char.m_HarpoonTimeLeft = 0;
+			
+			RenderPlayer(&Char);
+		}
 	}
 
 	// render flag

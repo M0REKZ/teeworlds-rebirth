@@ -204,7 +204,10 @@ int CControls::SnapInput(int *pData)
 		return 0;
 
 	s_LastSendTime = time_get();
-	mem_copy(pData, &m_InputData, sizeof(m_InputData));
+	if(m_pClient->m_RebirthServer)
+		mem_copy(pData, &m_InputData, sizeof(m_InputData));
+	else
+		mem_copy(pData, &m_InputData, sizeof(CNetObj_PlayerInput_07));
 	return sizeof(m_InputData);
 }
 

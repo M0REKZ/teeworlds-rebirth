@@ -23,6 +23,30 @@ MACRO_TUNING_PARAM(Gravity, gravity, 0.5f)
 MACRO_TUNING_PARAM(VelrampStart, velramp_start, 550)
 MACRO_TUNING_PARAM(VelrampRange, velramp_range, 2000)
 MACRO_TUNING_PARAM(VelrampCurvature, velramp_curvature, 1.4f)
+
+MACRO_TUNING_PARAM(GunCurvature, gun_curvature, 1.25f)
+MACRO_TUNING_PARAM(GunSpeed, gun_speed, 2200.0f)
+MACRO_TUNING_PARAM(GunLifetime, gun_lifetime, 2.0f)
+
+MACRO_TUNING_PARAM(ShotgunCurvature, shotgun_curvature, 1.25f)
+MACRO_TUNING_PARAM(ShotgunSpeed, shotgun_speed, 2750.0f)
+MACRO_TUNING_PARAM(ShotgunSpeeddiff, shotgun_speeddiff, 0.8f)
+MACRO_TUNING_PARAM(ShotgunLifetime, shotgun_lifetime, 0.20f)
+MACRO_TUNING_PARAM(ShotgunWaterResistance, shotgun_liq_resistance, 0.25f)
+
+MACRO_TUNING_PARAM(GrenadeCurvature, grenade_curvature, 7.0f)
+MACRO_TUNING_PARAM(GrenadeSpeed, grenade_speed, 1000.0f)
+MACRO_TUNING_PARAM(GrenadeLifetime, grenade_lifetime, 2.0f)
+
+MACRO_TUNING_PARAM(LaserReach, laser_reach, 800.0f)
+MACRO_TUNING_PARAM(LaserBounceDelay, laser_bounce_delay, 150)
+MACRO_TUNING_PARAM(LaserBounceNum, laser_bounce_num, 1)
+MACRO_TUNING_PARAM(LaserBounceCost, laser_bounce_cost, 0)
+
+MACRO_TUNING_PARAM(PlayerCollision, player_collision, 1)
+MACRO_TUNING_PARAM(PlayerHooking, player_hooking, 1)
+
+//TW REBIRTH
 //liquid physics nondiving
 MACRO_TUNING_PARAM(LiquidHorizontalDecel, liq_x_decel, 0.95)
 MACRO_TUNING_PARAM(LiquidVerticalDecel, liq_y_decel, 0.95)
@@ -51,20 +75,6 @@ MACRO_TUNING_PARAM(LiquidUseAscendDescend, liq_asc_desc, 1.0f)
 // weapon tuning
 MACRO_TUNING_PARAM(PickUpDisturbedTime, pickup_disturbed_time, 10.0f)
 
-MACRO_TUNING_PARAM(GunCurvature, gun_curvature, 1.25f)
-MACRO_TUNING_PARAM(GunSpeed, gun_speed, 2200.0f)
-MACRO_TUNING_PARAM(GunLifetime, gun_lifetime, 2.0f)
-
-MACRO_TUNING_PARAM(ShotgunCurvature, shotgun_curvature, 1.25f)
-MACRO_TUNING_PARAM(ShotgunSpeed, shotgun_speed, 2750.0f)
-MACRO_TUNING_PARAM(ShotgunSpeeddiff, shotgun_speeddiff, 0.8f)
-MACRO_TUNING_PARAM(ShotgunLifetime, shotgun_lifetime, 0.20f)
-MACRO_TUNING_PARAM(ShotgunWaterResistance, shotgun_liq_resistance, 0.25f)
-
-MACRO_TUNING_PARAM(GrenadeCurvature, grenade_curvature, 7.0f)
-MACRO_TUNING_PARAM(GrenadeSpeed, grenade_speed, 1000.0f)
-MACRO_TUNING_PARAM(GrenadeLifetime, grenade_lifetime, 2.0f)
-
 MACRO_TUNING_PARAM(HarpoonSpeed, harpoon_speed, 2000.0f)
 MACRO_TUNING_PARAM(HarpoonCurvature, harpoon_curvature, 1.25f)
 MACRO_TUNING_PARAM(HarpoonDragSpeed, harpoon_drag_speed, 10.0f)
@@ -79,13 +89,6 @@ MACRO_TUNING_PARAM(HarpoonReloadTime, harpoon_reload_time, 1.0f)
 MACRO_TUNING_PARAM(HarpoonDamage, harpoon_damage, 2.0f)
 MACRO_TUNING_PARAM(HarpoonDelay, harpoon_extra_dmg_delay, 1.5f)
 
-MACRO_TUNING_PARAM(LaserReach, laser_reach, 800.0f)
-MACRO_TUNING_PARAM(LaserBounceDelay, laser_bounce_delay, 150)
-MACRO_TUNING_PARAM(LaserBounceNum, laser_bounce_num, 1)
-MACRO_TUNING_PARAM(LaserBounceCost, laser_bounce_cost, 0)
 MACRO_TUNING_PARAM(LaserWaterReachMultiplier, laser_liq_reach, 1.5f)
 MACRO_TUNING_PARAM(LaserWaterDiffraction, laser_liq_diffraction, 1.33f)
-
-MACRO_TUNING_PARAM(PlayerCollision, player_collision, 1)
-MACRO_TUNING_PARAM(PlayerHooking, player_hooking, 1)
 #endif

@@ -763,6 +763,11 @@ void CGameContext::OnClientConnected(int ClientID, bool Dummy, bool AsSpec)
 
 	// send settings
 	SendSettings(ClientID);
+
+	// send rebirth
+	CNetMsg_RebirthBool Msg;
+	Msg.m_RebirthBool = true; 
+	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
 
 void CGameContext::OnClientTeamChange(int ClientID)
@@ -1167,6 +1172,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			SendVoteOptions(ClientID);
 			SendTuningParams(ClientID);
 			SendReadyToEnter(pPlayer);
+		}
+		else if(MsgID == NETMSGTYPE_REBIRTHBOOL)
+		{
+			pPlayer->m_Rebirth = ((CNetMsg_RebirthBool *)pRawMsg)->m_RebirthBool;
 		}
 	}
 }
