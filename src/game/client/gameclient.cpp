@@ -52,6 +52,7 @@
 #include "components/spectator.h"
 #include "components/stats.h"
 #include "components/voting.h"
+#include "components/water.h"
 
 inline void AppendDecimals(char *pBuf, int Size, int Time, int Precision)
 {
@@ -114,6 +115,7 @@ static CDamageInd gsDamageInd;
 static CVoting gs_Voting;
 static CSpectator gs_Spectator;
 static CStats gs_Stats;
+static CWater gs_Water;
 
 static CPlayers gs_Players;
 static CNamePlates gs_NamePlates;
@@ -255,6 +257,8 @@ void CGameClient::OnConsoleInit()
 	m_pMapLayersBackGround = &::gs_MapLayersBackGround;
 	m_pMapLayersForeGround = &::gs_MapLayersForeGround;
 	m_pStats = &::gs_Stats;
+	m_pWater = &::gs_Water;
+	m_pPlayerRender = &::gs_Players;
 
 	// make a list of all the systems, make sure to add them in the corrent render order
 	m_All.Add(m_pSkins);
@@ -271,6 +275,7 @@ void CGameClient::OnConsoleInit()
 
 	m_All.Add(&gs_MapLayersBackGround); // first to render
 	m_All.Add(&m_pParticles->m_RenderTrail);
+	m_All.Add(m_pWater);
 	m_All.Add(m_pItems);
 	m_All.Add(&gs_Players);
 	m_All.Add(&gs_MapLayersForeGround);
@@ -453,8 +458,7 @@ int CGameClient::OnSnapInput(int *pData)
 void CGameClient::OnConnected()
 {
 	m_Layers.Init(Kernel());
-	m_Collision.Init(Layers());
-
+	m_Collision.Init(Layers(), &WaterSplash);
 	for(int i = 0; i < m_All.m_Num; i++)
 	{
 		m_All.m_apComponents[i]->OnMapLoad();
@@ -496,6 +500,7 @@ void CGameClient::OnReset()
 		m_LastGameStartTick = -1;
 		m_LastFlagCarrierRed = FLAG_MISSING;
 		m_LastFlagCarrierBlue = FLAG_MISSING;
+		m_RebirthServer = false;
 	}
 }
 
@@ -1018,6 +1023,11 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker)
 		DoLeaveMessage(pMsg->m_pName, pMsg->m_ClientID, pMsg->m_pReason);
 		m_pStats->OnPlayerLeave(pMsg->m_ClientID);
 	}
+	else if(MsgId == NETMSGTYPE_REBIRTHBOOL)
+	{
+		CNetMsg_RebirthBool *pMsg = (CNetMsg_RebirthBool *)pRawMsg;
+		m_RebirthServer = pMsg->m_RebirthBool;
+	}
 }
 
 void CGameClient::OnStateChange(int NewState, int OldState)
@@ -1075,7 +1085,7 @@ void CGameClient::ProcessEvents()
 		else if(Item.m_Type == NETEVENTTYPE_EXPLOSION)
 		{
 			CNetEvent_Explosion *ev = (CNetEvent_Explosion *)pData;
-			m_pEffects->Explosion(vec2(ev->m_X, ev->m_Y));
+			m_pEffects->Explosion(vec2(ev->m_X, ev->m_Y), ev->m_Radius / 100);
 		}
 		else if(Item.m_Type == NETEVENTTYPE_HAMMERHIT)
 		{
@@ -1096,6 +1106,11 @@ void CGameClient::ProcessEvents()
 		{
 			CNetEvent_SoundWorld *ev = (CNetEvent_SoundWorld *)pData;
 			m_pSounds->PlayAt(CSounds::CHN_WORLD, ev->m_SoundID, 1.0f, vec2(ev->m_X, ev->m_Y));
+		}
+		else if(Item.m_Type == NETEVENTTYPE_EXPLOSION_07)
+		{
+			CNetEvent_Explosion_07 *ev = (CNetEvent_Explosion_07 *)pData;
+			m_pEffects->Explosion(vec2(ev->m_X, ev->m_Y), 1);
 		}
 	}
 }
@@ -1193,6 +1208,7 @@ void CGameClient::OnNewSnapshot()
 
 	// go trough all the items in the snapshot and gather the info we want
 	{
+		m_Snap.HarpoonDragCount = 0;
 		int Num = Client()->SnapNumItems(IClient::SNAP_CURRENT);
 		for(int i = 0; i < Num; i++)
 		{
@@ -1325,6 +1341,112 @@ void CGameClient::OnNewSnapshot()
 						ProcessTriggeredEvents(pCharInfo->m_Cur.m_TriggeredEvents, vec2(pCharInfo->m_Cur.m_X, pCharInfo->m_Cur.m_Y));
 				}
 			}
+			else if(Item.m_Type == NETOBJTYPE_CHARACTER_07)
+			{
+				if(Item.m_ID < MAX_CLIENTS)
+				{
+					CSnapState::CCharacterInfo *pCharInfo = &m_Snap.m_aCharacters[Item.m_ID];
+					const void *pOld = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_CHARACTER_07, Item.m_ID);
+
+					CNetObj_Character Data;
+					mem_zero(&Data, sizeof(Data));
+					CNetObj_Character_07* pData07 = (CNetObj_Character_07*)pData;
+					Data.m_Tick = pData07->m_Tick;
+					Data.m_X = pData07->m_X;
+					Data.m_Y = pData07->m_Y;
+					Data.m_VelX = pData07->m_VelX;
+					Data.m_VelY = pData07->m_VelY;
+					Data.m_Angle = pData07->m_Angle;
+					Data.m_Direction = pData07->m_Direction;
+					Data.m_Jumped = pData07->m_Jumped;
+					Data.m_HookedPlayer = pData07->m_HookedPlayer;
+					Data.m_HookState = pData07->m_HookState;
+					Data.m_HookTick = pData07->m_HookTick;
+					Data.m_HookX = pData07->m_HookX;
+					Data.m_HookY = pData07->m_HookY;
+					Data.m_HookDx = pData07->m_HookDx;
+					Data.m_HookDy = pData07->m_HookDy;
+					Data.m_DirectionVertical = 0;
+					Data.m_DivingGear = 0;
+
+					Data.m_Health = pData07->m_Health;
+					Data.m_Armor = pData07->m_Armor;
+					Data.m_AmmoCount = pData07->m_AmmoCount;
+					Data.m_Weapon = pData07->m_Weapon;
+					Data.m_Emote = pData07->m_Emote;
+					Data.m_AttackTick = pData07->m_AttackTick;
+					Data.m_TriggeredEvents = pData07->m_TriggeredEvents;
+					Data.m_BreathBubbles = -1;
+					Data.m_HarpoonAmmoReload = 0;
+					Data.m_HarpoonTimeLeft = 0;
+
+					pCharInfo->m_Cur = Data;
+
+					// clamp ammo count for non ninja weapon
+					if(pCharInfo->m_Cur.m_Weapon != WEAPON_NINJA)
+						pCharInfo->m_Cur.m_AmmoCount = clamp(pCharInfo->m_Cur.m_AmmoCount, 0, 10);
+
+					if(pOld)
+					{
+						CNetObj_Character_07* pOldData07 = (CNetObj_Character_07*)pOld;
+						CNetObj_Character OldData;
+						mem_zero(&OldData, sizeof(OldData));
+						OldData.m_Tick = pOldData07->m_Tick;
+						OldData.m_X = pOldData07->m_X;
+						OldData.m_Y = pOldData07->m_Y;
+						OldData.m_VelX = pOldData07->m_VelX;
+						OldData.m_VelY = pOldData07->m_VelY;
+						OldData.m_Angle = pOldData07->m_Angle;
+						OldData.m_Direction = pOldData07->m_Direction;
+						OldData.m_Jumped = pOldData07->m_Jumped;
+						OldData.m_HookedPlayer = pOldData07->m_HookedPlayer;
+						OldData.m_HookState = pOldData07->m_HookState;
+						OldData.m_HookTick = pOldData07->m_HookTick;
+						OldData.m_HookX = pOldData07->m_HookX;
+						OldData.m_HookY = pOldData07->m_HookY;
+						OldData.m_HookDx = pOldData07->m_HookDx;
+						OldData.m_HookDy = pOldData07->m_HookDy;
+						OldData.m_DirectionVertical = 0;
+						OldData.m_DivingGear = 0;
+
+						OldData.m_Health = pOldData07->m_Health;
+						OldData.m_Armor = pOldData07->m_Armor;
+						OldData.m_AmmoCount = pOldData07->m_AmmoCount;
+						OldData.m_Weapon = pOldData07->m_Weapon;
+						OldData.m_Emote = pOldData07->m_Emote;
+						OldData.m_AttackTick = pOldData07->m_AttackTick;
+						OldData.m_TriggeredEvents = pOldData07->m_TriggeredEvents;
+						OldData.m_BreathBubbles = -1;
+						OldData.m_HarpoonAmmoReload = 0;
+						OldData.m_HarpoonTimeLeft = 0;
+
+						pCharInfo->m_Active = true;
+						pCharInfo->m_Prev = OldData;
+
+						// limit evolving to 3 seconds
+						int EvolvePrevTick = minimum(pCharInfo->m_Prev.m_Tick + Client()->GameTickSpeed()*3, Client()->PrevGameTick());
+						int EvolveCurTick = minimum(pCharInfo->m_Cur.m_Tick + Client()->GameTickSpeed()*3, Client()->GameTick());
+
+						// reuse the evolved char
+						if(m_aClients[Item.m_ID].m_Evolved.m_Tick == EvolvePrevTick)
+						{
+							pCharInfo->m_Prev = m_aClients[Item.m_ID].m_Evolved;
+							if(mem_comp(&Data, &OldData, sizeof(CNetObj_Character)) == 0)
+								pCharInfo->m_Cur = m_aClients[Item.m_ID].m_Evolved;
+						}
+
+						if(pCharInfo->m_Prev.m_Tick)
+							EvolveCharacter(&pCharInfo->m_Prev, EvolvePrevTick);
+						if(pCharInfo->m_Cur.m_Tick)
+							EvolveCharacter(&pCharInfo->m_Cur, EvolveCurTick);
+
+						m_aClients[Item.m_ID].m_Evolved = m_Snap.m_aCharacters[Item.m_ID].m_Cur;
+					}
+
+					if(Item.m_ID != m_LocalClientID || Client()->State() == IClient::STATE_DEMOPLAYBACK)
+						ProcessTriggeredEvents(pCharInfo->m_Cur.m_TriggeredEvents, vec2(pCharInfo->m_Cur.m_X, pCharInfo->m_Cur.m_Y));
+				}
+			}
 			else if(Item.m_Type == NETOBJTYPE_SPECTATORINFO)
 			{
 				m_Snap.m_pSpectatorInfo = (const CNetObj_SpectatorInfo *)pData;
@@ -1382,6 +1504,14 @@ void CGameClient::OnNewSnapshot()
 			else if(Item.m_Type == NETOBJTYPE_FLAG)
 			{
 				m_Snap.m_apFlags[Item.m_ID%2] = (const CNetObj_Flag *)pData;
+			}
+			else if (Item.m_Type == NETOBJTYPE_HARPOONDRAGPLAYER)
+			{
+				if (m_Snap.HarpoonDragCount < 64) //64 packets are enough. Surely nobody is gonna send more than this
+				{
+					m_Snap.m_paHarpoonDragData[m_Snap.HarpoonDragCount] = (const CNetObj_HarpoonDragPlayer*)pData;
+					m_Snap.HarpoonDragCount++;
+				}
 			}
 		}
 	}
@@ -1613,6 +1743,7 @@ void CGameClient::OnPredict()
 				continue;
 
 			World.m_apCharacters[c]->AddDragVelocity();
+			World.m_apCharacters[c]->AddHarpoonDragVelocity();
 			World.m_apCharacters[c]->ResetDragVelocity();
 			World.m_apCharacters[c]->Move();
 			World.m_apCharacters[c]->Quantize();
@@ -1692,6 +1823,11 @@ vec2 CGameClient::GetCharPos(int ClientID, bool Predicted) const
 			Client()->IntraGameTick()
 		);
 	}
+}
+
+vec2 CGameClient::GetHarpoonAlignment(vec2 WeaponPos, float Angle) const
+{
+	return m_pPlayerRender->HarpoonMouthAlignment(WeaponPos, Angle);
 }
 
 void CGameClient::OnActivateEditor()
@@ -1894,6 +2030,11 @@ void CGameClient::SendStartInfo()
 		Msg.m_aSkinPartColors[p] = *CSkins::ms_apColorVariables[p];
 	}
 	Client()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_FLUSH);
+
+	//TW Rebirth
+	CNetMsg_RebirthBool Msg2;
+	Msg2.m_RebirthBool = true;
+	Client()->SendPackMsg(&Msg2, MSGFLAG_VITAL|MSGFLAG_FLUSH);
 }
 
 void CGameClient::SendKill()
@@ -2008,6 +2149,11 @@ void CGameClient::ConchainXmasHatUpdate(IConsole::IResult *pResult, void *pUserD
 		if(pClient->m_aClients[i].m_Active)
 			pClient->m_aClients[i].UpdateRenderInfo(pClient, i, true);
 	}
+}
+
+void CGameClient::WaterSplash(float x, float y, float Force)
+{
+	gs_Water.HitWater(x, y, Force);
 }
 
 IGameClient *CreateGameClient()

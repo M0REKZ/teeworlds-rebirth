@@ -123,7 +123,7 @@ void CGameContext::CreateHammerHit(vec2 Pos)
 }
 
 
-void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage)
+void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage, float RadiusMultiplier)
 {
 	// create the event
 	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion));
@@ -131,11 +131,12 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamag
 	{
 		pEvent->m_X = (int)Pos.x;
 		pEvent->m_Y = (int)Pos.y;
+		pEvent->m_Radius = (int)RadiusMultiplier * 100;
 	}
 
 	// deal damage
 	CCharacter *apEnts[MAX_CLIENTS];
-	float Radius = g_pData->m_Explosion.m_Radius;
+	float Radius = g_pData->m_Explosion.m_Radius * RadiusMultiplier;
 	float InnerRadius = 48.0f;
 	float MaxForce = g_pData->m_Explosion.m_MaxForce;
 	int Num = m_World.FindEntities(Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
@@ -762,6 +763,11 @@ void CGameContext::OnClientConnected(int ClientID, bool Dummy, bool AsSpec)
 
 	// send settings
 	SendSettings(ClientID);
+
+	// send rebirth
+	CNetMsg_RebirthBool Msg;
+	Msg.m_RebirthBool = true; 
+	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
 
 void CGameContext::OnClientTeamChange(int ClientID)
@@ -1166,6 +1172,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			SendVoteOptions(ClientID);
 			SendTuningParams(ClientID);
 			SendReadyToEnter(pPlayer);
+		}
+		else if(MsgID == NETMSGTYPE_REBIRTHBOOL)
+		{
+			pPlayer->m_Rebirth = ((CNetMsg_RebirthBool *)pRawMsg)->m_RebirthBool;
 		}
 	}
 }
@@ -1618,7 +1628,7 @@ void CGameContext::OnInit()
 	// select gametype
 	if(str_comp_nocase(Config()->m_SvGametype, "mod") == 0)
 		m_pController = new CGameControllerMOD(this);
-	else if(str_comp_nocase(Config()->m_SvGametype, "ctf") == 0)
+	else if(str_comp_nocase(Config()->m_SvGametype, "ctfw") == 0)
 		m_pController = new CGameControllerCTF(this);
 	else if(str_comp_nocase(Config()->m_SvGametype, "lms") == 0)
 		m_pController = new CGameControllerLMS(this);

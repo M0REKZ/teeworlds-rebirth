@@ -1,6 +1,6 @@
 from datatypes import *
 
-Pickups = Enum("PICKUP", ["HEALTH", "ARMOR", "GRENADE", "SHOTGUN", "LASER", "NINJA", "GUN", "HAMMER"])
+Pickups = Enum("PICKUP", ["HEALTH", "ARMOR", "GRENADE", "SHOTGUN", "LASER", "NINJA", "GUN", "HAMMER", "HARPOON", "DIVING" ])
 Emotes = Enum("EMOTE", ["NORMAL", "PAIN", "HAPPY", "SURPRISE", "ANGRY", "BLINK"])
 Emoticons = Enum("EMOTICON", ["OOP", "EXCLAMATION", "HEARTS", "DROP", "DOTDOT", "MUSIC", "SORRY", "GHOST", "SUSHI", "SPLATTEE", "DEVILTEE", "ZOMG", "ZZZ", "WTF", "EYES", "QUESTION"])
 Votes = Enum("VOTE", ["UNKNOWN", "START_OP", "START_KICK", "START_SPEC", "END_ABORT", "END_PASS", "END_FAIL"]) # todo 0.8: add RUN_OP, RUN_KICK, RUN_SPEC; rem UNKNOWN
@@ -37,10 +37,16 @@ enum
 	TEAM_BLUE,
 	NUM_TEAMS,
 
-	FLAG_MISSING=-3,
+	FLAG_MISSING=-4,
+	FLAG_HOOKED,
 	FLAG_ATSTAND,
 	FLAG_TAKEN,
 
+	HARPOON_FLYING=0,
+	HARPOON_IN_CHARACTER,
+	HARPOON_IN_ENTITY,
+	HARPOON_IN_FLAG,
+	
 	SPEC_FREEVIEW=0,
 	SPEC_PLAYER,
 	SPEC_FLAGRED,
@@ -85,7 +91,7 @@ Flags = [
 
 Objects = [
 
-	NetObject("PlayerInput", [
+	NetObject("PlayerInput_07", [
 		NetIntRange("m_Direction", -1, 1),
 		NetIntAny("m_TargetX"),
 		NetIntAny("m_TargetY"),
@@ -103,7 +109,7 @@ Objects = [
 		NetIntAny("m_PrevWeapon"),
 	]),
 
-	NetObject("Projectile", [
+	NetObject("Projectile_07", [
 		NetIntAny("m_X"),
 		NetIntAny("m_Y"),
 		NetIntAny("m_VelX"),
@@ -122,7 +128,7 @@ Objects = [
 		NetTick("m_StartTick"),
 	]),
 
-	NetObject("Pickup", [
+	NetObject("Pickup_07", [
 		NetIntAny("m_X"),
 		NetIntAny("m_Y"),
 
@@ -154,7 +160,7 @@ Objects = [
 		NetTick("m_FlagDropTickBlue"),
 	]),
 
-	NetObject("CharacterCore", [
+ 	NetObject("CharacterCore_07", [
 		NetTick("m_Tick"),
 		NetIntAny("m_X"),
 		NetIntAny("m_Y"),
@@ -163,7 +169,7 @@ Objects = [
 
 		NetIntAny("m_Angle"),
 		NetIntRange("m_Direction", -1, 1),
-
+                
 		NetIntRange("m_Jumped", 0, 3),
 		NetIntRange("m_HookedPlayer", -1, 'MAX_CLIENTS-1'),
 		NetIntRange("m_HookState", -1, 5),
@@ -175,7 +181,7 @@ Objects = [
 		NetIntAny("m_HookDy"),
 	]),
 
-	NetObject("Character:CharacterCore", [
+	NetObject("Character_07:CharacterCore_07", [
 		NetIntRange("m_Health", 0, 10),
 		NetIntRange("m_Armor", 0, 10),
 		NetIntAny("m_AmmoCount"),
@@ -224,7 +230,7 @@ Objects = [
 		NetIntRange("m_MatchCurrent", 0, 'max_int'),
 	]),
 
-	NetObject("De_TuneParams", [
+	NetObject("De_TuneParams_07", [
 		# todo: should be done differently
 		NetArray(NetIntAny("m_aTuneParams"), 32),
 	]),
@@ -237,7 +243,7 @@ Objects = [
 	]),
 
 
-	NetEvent("Explosion:Common", []),
+	NetEvent("Explosion_07:Common", []),
 	NetEvent("Spawn:Common", []),
 	NetEvent("HammerHit:Common", []),
 
@@ -267,6 +273,113 @@ Objects = [
 		NetIntRange("m_BestTime", -1, 'max_int'),
 		NetIntRange("m_Precision", 0, 3),
 		NetFlag("m_RaceFlags", RaceFlags),
+	]),
+ 
+	##TW Rebirth
+ 	NetObject("De_TuneParams", [
+		# todo: should be done differently
+		NetArray(NetIntAny("m_aTuneParams"), 64),
+	]),
+  
+  	NetObject("Harpoon", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntAny("m_Dir_X"),
+		NetIntAny("m_Dir_Y"),
+		NetIntAny("m_OwnerID"),
+		NetIntAny("m_Owner_X"),
+		NetIntAny("m_Owner_Y"), #Fallback
+
+		NetTick("m_SpawnTick"),
+	]),
+
+	NetObject("HarpoonDragPlayer", [
+		NetIntAny("m_OwnerID"),
+		NetIntAny("m_Owner_X"),
+		NetIntAny("m_Owner_Y"), #Fallback
+		NetIntAny("m_VictimID"),
+		NetIntAny("m_X"), #Pickup or Fallback
+		NetIntAny("m_Y"), 
+
+		NetIntAny("m_Type"),
+	]),
+  
+  	NetObject("PlayerInput", [
+		NetIntRange("m_Direction", -1, 1),
+		NetIntAny("m_TargetX"),
+		NetIntAny("m_TargetY"),
+
+		NetBool("m_Jump"),
+		NetIntAny("m_Fire"),
+		NetBool("m_Hook"),
+
+		NetFlag("m_PlayerFlags", PlayerFlags),
+
+		# 0 means "no wanted weapon", `1+weapon` means that `weapon` is wanted,
+		# and ninja is not a valid wanted weapon.
+		NetIntRange("m_WantedWeapon", 0, 'NUM_WEAPONS-1'),
+		NetIntAny("m_NextWeapon"),
+		NetIntAny("m_PrevWeapon"),
+  		NetIntRange("m_DirectionVertical", -1, 1),
+	]),
+   
+   	NetObject("Projectile", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntAny("m_VelX"),
+		NetIntAny("m_VelY"),
+
+		NetIntRange("m_Type", 0, 'NUM_WEAPONS-1'),
+		NetTick("m_StartTick"),
+		NetIntAny("m_Water"),
+	]),
+   
+   	NetObject("Pickup", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+
+		NetEnum("m_Type", Pickups),
+  		NetIntAny("m_DisturbedTick"),
+	]),
+    
+    NetObject("CharacterCore", [
+		NetTick("m_Tick"),
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntAny("m_VelX"),
+		NetIntAny("m_VelY"),
+
+		NetIntAny("m_Angle"),
+		NetIntRange("m_Direction", -1, 1),
+                
+		NetIntRange("m_Jumped", 0, 3),
+		NetIntRange("m_HookedPlayer", -1, 'MAX_CLIENTS-1'),
+		NetIntRange("m_HookState", -1, 5),
+		NetTick("m_HookTick"),
+
+		NetIntAny("m_HookX"),
+		NetIntAny("m_HookY"),
+		NetIntAny("m_HookDx"),
+		NetIntAny("m_HookDy"),
+  		NetIntRange("m_DirectionVertical", -1, 1),
+		NetBool("m_DivingGear"),
+	]),
+    
+    NetObject("Character:CharacterCore", [
+		NetIntRange("m_Health", 0, 10),
+		NetIntRange("m_Armor", 0, 10),
+		NetIntAny("m_AmmoCount"),
+		NetIntRange("m_Weapon", -1, 'NUM_WEAPONS-1'),
+		NetEnum("m_Emote", Emotes),
+		NetTick("m_AttackTick"),
+		NetFlag("m_TriggeredEvents", CoreEventFlags),
+		NetIntAny("m_BreathBubbles"),
+		NetIntAny("m_HarpoonTimeLeft"),
+		NetIntAny("m_HarpoonAmmoReload"),
+	]),
+    
+    NetEvent("Explosion:Common", [
+		NetIntAny("m_Radius"),
 	]),
 ]
 
@@ -480,5 +593,10 @@ Messages = [
 			NetStringStrict("m_Name"),
 			NetStringStrict("m_Arguments")
 	]),
+ 
+	##TW Rebirth
+	NetMessage("RebirthBool", [
+			NetBool("m_RebirthBool"),
+	])
 
 ]

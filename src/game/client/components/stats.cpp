@@ -20,6 +20,7 @@ static const vec4 s_aWeaponColors[] =
 	vec4(163/255.0f, 51/255.0f, 56/255.0f, 1.0f),
 	vec4(65/255.0f, 97/255.0f, 161/255.0f, 1.0f),
 	vec4(182/255.0f, 137/255.0f, 40/255.0f, 1.0f),
+	vec4(182/255.0f, 137/255.0f, 40/255.0f, 1.0f), //temp color please replace
 };
 
 CStats::CStats()
@@ -321,12 +322,16 @@ void CStats::OnRender()
 			if(!aDisplayWeapon[i])
 				continue;
 
+			Graphics()->TextureSet(g_pData->m_aImages[IMAGE_GAME].m_Id);
+
+			Graphics()->QuadsBegin();
 			RenderTools()->SelectSprite(g_pData->m_Weapons.m_aId[i].m_pSpriteBody);
 			const float SizeFactor = i == WEAPON_HAMMER ? 0.7f : i == WEAPON_GUN ? 1.0f : 0.9f;
 			RenderTools()->DrawSprite(x+px-40, y + HeaderHeight / 2.0f, g_pData->m_Weapons.m_aId[i].m_VisualSize * SizeFactor);
 			px += 80;
+			Graphics()->QuadsEnd();
 		}
-		Graphics()->QuadsEnd();
+		
 		if(!NoDisplayedWeapon)
 			px += 10;
 	}
