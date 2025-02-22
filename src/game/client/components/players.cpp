@@ -417,7 +417,6 @@ void CPlayers::RenderPlayer(
 		vec2 Dir = Direction;
 		float Recoil = 0.0f;
 		vec2 p;
-		int iw = clamp(Player.m_Weapon, 0, NUM_WEAPONS - 1);
 		if (Player.m_Weapon == WEAPON_HARPOON&&Player.m_AmmoCount)
 		{
 			p = Position + Dir * g_pData->m_Weapons.m_aId[iw].m_Offsetx - Dir*Recoil*10.0f;

@@ -158,7 +158,7 @@ public:
 		const CNetObj_PlayerInfo *m_pLocalInfo;
 		const CNetObj_SpectatorInfo *m_pSpectatorInfo;
 		const CNetObj_SpectatorInfo *m_pPrevSpectatorInfo;
-		const CNetObj_Flag *m_paFlags[2];
+		const CNetObj_Flag *m_apFlags[2];
 		const CNetObj_RaceFlag *m_apRaceFlags[3];
 		const CNetObj_GameData *m_pGameData;
 		const CNetObj_GameDataTeam *m_pGameDataTeam;
