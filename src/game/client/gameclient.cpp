@@ -1497,6 +1497,11 @@ void CGameClient::OnNewSnapshot()
 				m_LastFlagCarrierRed = m_Snap.m_pGameDataFlag->m_FlagCarrierRed;
 				m_LastFlagCarrierBlue = m_Snap.m_pGameDataFlag->m_FlagCarrierBlue;
 			}
+			else if(Item.m_Type == NETOBJTYPE_GAMEDATARACEFLAG)
+			{
+				m_Snap.m_pGameDataRaceFlag = (const CNetObj_GameDataRaceFlag *)pData;
+				m_Snap.m_GameDataRaceFlagSnapID = Item.m_ID;
+			}
 			else if(Item.m_Type == NETOBJTYPE_GAMEDATARACE)
 			{
 				m_Snap.m_pGameDataRace = (const CNetObj_GameDataRace *)pData;
@@ -1512,6 +1517,10 @@ void CGameClient::OnNewSnapshot()
 					m_Snap.m_paHarpoonDragData[m_Snap.HarpoonDragCount] = (const CNetObj_HarpoonDragPlayer*)pData;
 					m_Snap.HarpoonDragCount++;
 				}
+			}
+			else if(Item.m_Type == NETOBJTYPE_RACEFLAG)
+			{
+				m_Snap.m_apRaceFlags[Item.m_ID % 3] = (const CNetObj_RaceFlag *)pData;
 			}
 		}
 	}

@@ -994,6 +994,7 @@ set(EXPECTED_DATA
   maps/readme.txt
   particles.png
   race_flag.png
+  race_podium_gimmics.png
   rope.png
   skins/beaver.json
   skins/bluekitty.json
