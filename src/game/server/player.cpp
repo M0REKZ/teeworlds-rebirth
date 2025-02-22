@@ -35,6 +35,9 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy, bool AsSpe
 	m_Spawning = false;
 	mem_zero(&m_Latency, sizeof(m_Latency));
 
+	m_SetEmoteStop = Server()->Tick();
+	m_SetEmoteType = EMOTE_NORMAL;
+
 	m_Rebirth = false;
 }
 
